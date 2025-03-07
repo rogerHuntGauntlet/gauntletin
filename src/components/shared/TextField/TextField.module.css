@@ -1,0 +1,69 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-dark-gray, #333333);
+  margin-bottom: 4px;
+}
+
+.required {
+  color: var(--color-error, #E93B3D);
+  margin-left: 4px;
+}
+
+.input {
+  height: 40px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid var(--color-light-gray, #E0E0E0);
+  border-radius: 4px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary, #0A66C2);
+  box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.2);
+}
+
+.hasError .input {
+  border-color: var(--color-error, #E93B3D);
+}
+
+.hasError .input:focus {
+  box-shadow: 0 0 0 2px rgba(233, 59, 61, 0.2);
+}
+
+.error {
+  font-size: 12px;
+  color: var(--color-error, #E93B3D);
+  margin-top: 4px;
+}
+
+.helperText {
+  font-size: 12px;
+  color: var(--color-medium-gray, #666666);
+  margin-top: 4px;
+}
+
+.disabled {
+  opacity: 0.6;
+}
+
+.disabled .input {
+  background-color: var(--color-background-gray, #F3F2EF);
+  cursor: not-allowed;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.fullWidth .input {
+  width: 100%;
+} 
