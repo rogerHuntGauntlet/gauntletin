@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #0d66c2;
+  --primary-hover: #0a4d8f;
+}
+
+body {
+  @apply bg-gray-50;
+}
+
+/* Global loading spinner */
+.spinner {
+  @apply animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary;
+} 
