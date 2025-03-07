@@ -120,7 +120,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className={styles.feedContent}>
-                  <p>Excited to announce that we've just launched our new AI-powered feature! Check it out and let me know what you think.</p>
+                  <p>Excited to announce that we&apos;ve just launched our new AI-powered feature! Check it out and let me know what you think.</p>
                 </div>
                 <div className={styles.feedActions}>
                   <button className={styles.feedAction}>

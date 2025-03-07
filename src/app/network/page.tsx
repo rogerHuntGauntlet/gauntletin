@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useAuthContext } from '@/context/AuthContext';
+// import { useAuthContext } from '@/context/AuthContext'; // Removed as it's not being used
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Navigation } from '@/components/shared/Navigation';
 import { Card } from '@/components/shared/Card';
 import { Button } from '@/components/shared/Button';
 import { Avatar } from '@/components/shared/Avatar';
-import { TextField } from '@/components/shared/TextField';
 import styles from './Network.module.css';
 
 // Mock data for connections
@@ -162,7 +161,8 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({
 };
 
 export default function Network() {
-  const { user } = useAuthContext();
+  // User variable commented as it's not currently used
+  // const { user } = useAuthContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('connections');
 

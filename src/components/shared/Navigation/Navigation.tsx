@@ -13,7 +13,7 @@ interface NavigationItem {
 
 export const Navigation: React.FC = () => {
   const pathname = usePathname();
-  const { user, signOut } = useAuthContext();
+  const { user } = useAuthContext();
   
   // Navigation items
   const navigationItems: NavigationItem[] = [

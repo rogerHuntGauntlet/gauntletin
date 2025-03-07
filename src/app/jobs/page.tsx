@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useAuthContext } from '@/context/AuthContext';
+// import { useAuthContext } from '@/context/AuthContext'; // Removed as it's not being used
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Navigation } from '@/components/shared/Navigation';
 import { Card } from '@/components/shared/Card';
@@ -159,7 +159,7 @@ const JobCard: React.FC<JobCardProps> = ({
 };
 
 export default function Jobs() {
-  const { user } = useAuthContext();
+  // const { user } = useAuthContext(); // Removed as it's not being used
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [savedJobs, setSavedJobs] = useState<string[]>(MOCK_SAVED_JOBS);
