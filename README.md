@@ -1,58 +1,65 @@
 # GauntletIn
 
-GauntletIn is a specialized professional networking platform designed exclusively for Gauntlet AI employees. It provides a secure space for team members to connect, share updates, and collaborate using their @gauntletai.com email addresses.
+A professional social networking platform built with Next.js 15 and React.
 
 ## Features
 
-- **Secure Authentication**: Only users with @gauntletai.com email addresses can register and access the platform
-- **Professional Profiles**: Create and customize your professional profile with your skills, experience, and interests
-- **News Feed**: Share updates, articles, and insights with your colleagues
-- **Messaging**: Connect directly with team members through private messaging
-- **Job Board**: Internal job postings and career development opportunities
+- **User Authentication**: Secure login and signup with email/password
+- **Posting**: Create, like, and share posts with your network
+- **Messaging**: Real-time chat functionality with colleagues
+- **Job Listings**: Browse and apply for job opportunities
+- **Profile Management**: Manage your professional profile
 
-## Technology Stack
+## Development Setup
 
-- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
-- **Backend**: Firebase (Authentication, Firestore, Storage, Analytics)
-- **Deployment**: Vercel
+1. **Clone the repository**
+   ```
+   git clone https://github.com/yourusername/gauntletin.git
+   cd gauntletin
+   ```
 
-## Getting Started
+2. **Install dependencies**
+   ```
+   npm install
+   ```
 
-First, set up environment variables by creating a `.env.local` file with your Firebase configuration:
+3. **Run the development server**
+   ```
+   npm run dev
+   ```
 
-```
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_domain.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_bucket.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
-```
-
-Then, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Learn More
-
-To learn more about the technologies used in this project:
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [React Documentation](https://reactjs.org/docs/getting-started.html)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [Firebase Documentation](https://firebase.google.com/docs)
+4. **Build for production**
+   ```
+   npm run build
+   ```
 
 ## Deployment
 
-The app is configured for easy deployment on Vercel:
+This project is configured for deployment on Vercel. The following files assist with the deployment process:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FrogerHuntGauntlet%2Fgauntletin)
+- `vercel.json` - Vercel deployment configuration
+- `next.config.js` - Next.js build configuration
+
+## Project Structure
+
+```
+src/
+├── app/             # Next.js app router pages
+├── components/      # React components
+├── context/         # React context providers
+├── hooks/           # Custom React hooks
+├── lib/             # Utility libraries and services
+├── styles/          # Global CSS styles
+└── types/           # TypeScript type definitions
+```
+
+## Notes on Fixes
+
+- ESLint issues have been resolved with proper disabling comments where necessary
+- TypeScript typing has been improved throughout the codebase
+- Mock authentication has been implemented for development purposes
+- Build configuration has been optimized for deployment
+
+## License
+
+MIT

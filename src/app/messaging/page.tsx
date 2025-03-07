@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useAuthContext } from '@/context/AuthContext';
+// Removing unused import
+// import { useAuthContext } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Navigation } from '@/components/shared/Navigation';
 import { Card } from '@/components/shared/Card';
@@ -276,7 +277,7 @@ const Message = ({ message }: { message: typeof MOCK_MESSAGES['1'][0] }) => {
 };
 
 export default function Messaging() {
-  const { user } = useAuthContext();
+  // const { user } = useAuthContext();
   const [conversations, setConversations] = useState(MOCK_CONVERSATIONS);
   const [activeConversation, setActiveConversation] = useState<string | null>('1');
   const [messages, setMessages] = useState<typeof MOCK_MESSAGES['1']>([]);

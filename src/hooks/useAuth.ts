@@ -70,7 +70,9 @@ export function useAuth(): UseAuthReturn {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 500));
         setUser(createMockUser() as unknown as User);
-      } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
+        // Ignore the error in mock mode but set error state
         setError({
           code: 'auth/mock-error',
           message: 'Mock authentication error'
@@ -113,7 +115,9 @@ export function useAuth(): UseAuthReturn {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 500));
         setUser(createMockUser() as unknown as User);
-      } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
+        // Ignore the error in mock mode but set error state
         setError({
           code: 'auth/mock-error',
           message: 'Mock authentication error'
@@ -148,7 +152,9 @@ export function useAuth(): UseAuthReturn {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 500));
         setUser(null);
-      } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_) {
+        // Ignore the error in mock mode but set error state
         setError({
           code: 'auth/mock-error',
           message: 'Mock authentication error'
