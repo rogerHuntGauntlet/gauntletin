@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
-// import { useAuthContext } from '@/context/AuthContext'; // Removed as it's not being used
+import React, { useState, useEffect } from 'react';
+import { useAuthContext } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Navigation } from '@/components/shared/Navigation';
 import { Card } from '@/components/shared/Card';
 import { Button } from '@/components/shared/Button';
+import { Avatar } from '@/components/shared/Avatar';
+import { jobsService } from '@/lib/firestore';
 import styles from './Jobs.module.css';
 
 // Mock data for jobs
@@ -159,16 +161,64 @@ const JobCard: React.FC<JobCardProps> = ({
 };
 
 export default function Jobs() {
-  // const { user } = useAuthContext(); // Removed as it's not being used
+  const { user } = useAuthContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [savedJobs, setSavedJobs] = useState<string[]>(MOCK_SAVED_JOBS);
   const [appliedJobs, setAppliedJobs] = useState<string[]>(MOCK_APPLIED_JOBS);
+  const [jobs, setJobs] = useState(MOCK_JOBS);
   const [filters, setFilters] = useState({
     location: '',
     jobType: '',
     datePosted: ''
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch jobs, saved jobs, and applied jobs from Firestore
+  useEffect(() => {
+    async function fetchJobs() {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        // Fetch jobs
+        const fetchedJobs = await jobsService.getJobs();
+        if (fetchedJobs.length > 0) {
+          // Format jobs for UI
+          const formattedJobs = fetchedJobs.map(job => ({
+            id: job.id || 'unknown',
+            title: job.title,
+            company: job.company,
+            location: job.location,
+            type: job.type,
+            salary: job.salary,
+            posted: job.postedString || 'Recently',
+            description: job.description,
+            skills: job.skills
+          }));
+          setJobs(formattedJobs);
+        }
+        
+        // Fetch saved and applied jobs
+        if (user.uid) {
+          const savedJobIds = await jobsService.getSavedJobs(user.uid);
+          setSavedJobs(savedJobIds);
+          
+          const appliedJobIds = await jobsService.getAppliedJobs(user.uid);
+          setAppliedJobs(appliedJobIds);
+        }
+      } catch (err) {
+        console.error('Error fetching jobs:', err);
+        setError('Failed to load jobs. Please try again later.');
+        // Fall back to mock data
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchJobs();
+  }, [user]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -182,21 +232,43 @@ export default function Jobs() {
     });
   };
 
-  const handleSaveJob = (id: string) => {
-    if (savedJobs.includes(id)) {
-      setSavedJobs(savedJobs.filter(jobId => jobId !== id));
-    } else {
-      setSavedJobs([...savedJobs, id]);
+  const handleSaveJob = async (id: string) => {
+    if (!user?.uid) return;
+    
+    try {
+      // Update saved status in Firestore
+      const isSaved = await jobsService.toggleSaveJob(id, user.uid);
+      
+      // Update UI
+      if (isSaved) {
+        setSavedJobs([...savedJobs, id]);
+      } else {
+        setSavedJobs(savedJobs.filter(jobId => jobId !== id));
+      }
+    } catch (err) {
+      console.error('Error saving job:', err);
+      setError('Failed to save job. Please try again.');
     }
   };
 
-  const handleApplyJob = (id: string) => {
-    if (!appliedJobs.includes(id)) {
-      setAppliedJobs([...appliedJobs, id]);
+  const handleApplyJob = async (id: string) => {
+    if (!user?.uid) return;
+    
+    try {
+      // Apply for job in Firestore
+      const success = await jobsService.applyForJob(id, user.uid);
+      
+      // Update UI if successful
+      if (success) {
+        setAppliedJobs([...appliedJobs, id]);
+      }
+    } catch (err) {
+      console.error('Error applying for job:', err);
+      setError('Failed to apply for job. Please try again.');
     }
   };
 
-  const filteredJobs = MOCK_JOBS.filter(job => {
+  const filteredJobs = jobs.filter(job => {
     // Search query filter
     const matchesSearch = 
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -336,33 +408,49 @@ export default function Jobs() {
                   <p className={styles.jobsCount}>{filteredJobs.length} jobs found</p>
                 </div>
                 
-                <div className={styles.jobsList}>
-                  {filteredJobs.length > 0 ? (
-                    filteredJobs.map(job => (
-                      <JobCard
-                        key={job.id}
-                        id={job.id}
-                        title={job.title}
-                        company={job.company}
-                        location={job.location}
-                        type={job.type}
-                        salary={job.salary}
-                        posted={job.posted}
-                        description={job.description}
-                        skills={job.skills}
-                        isSaved={savedJobs.includes(job.id)}
-                        isApplied={appliedJobs.includes(job.id)}
-                        onSave={handleSaveJob}
-                        onApply={handleApplyJob}
-                      />
-                    ))
-                  ) : (
-                    <div className={styles.noJobsFound}>
-                      <p>No jobs found matching your criteria.</p>
-                      <p>Try adjusting your search or filters.</p>
-                    </div>
-                  )}
-                </div>
+                {isLoading ? (
+                  <Card className={styles.loadingCard}>
+                    <div className={styles.loadingSpinner}></div>
+                    <p className={styles.loadingText}>Loading jobs...</p>
+                  </Card>
+                ) : error ? (
+                  <Card className={styles.errorCard}>
+                    <p className={styles.errorText}>{error}</p>
+                    <Button 
+                      label="Retry" 
+                      variant="primary"
+                      onClick={() => window.location.reload()}
+                    />
+                  </Card>
+                ) : (
+                  <div className={styles.jobsList}>
+                    {filteredJobs.length > 0 ? (
+                      filteredJobs.map(job => (
+                        <JobCard
+                          key={job.id}
+                          id={job.id}
+                          title={job.title}
+                          company={job.company}
+                          location={job.location}
+                          type={job.type}
+                          salary={job.salary}
+                          posted={job.posted}
+                          description={job.description}
+                          skills={job.skills}
+                          isSaved={savedJobs.includes(job.id)}
+                          isApplied={appliedJobs.includes(job.id)}
+                          onSave={handleSaveJob}
+                          onApply={handleApplyJob}
+                        />
+                      ))
+                    ) : (
+                      <div className={styles.noJobsFound}>
+                        <p>No jobs found matching your criteria.</p>
+                        <p>Try adjusting your search or filters.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

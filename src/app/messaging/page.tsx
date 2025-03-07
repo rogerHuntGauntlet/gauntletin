@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-// Removing unused import
-// import { useAuthContext } from '@/context/AuthContext';
+import { useAuthContext } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Navigation } from '@/components/shared/Navigation';
 import { Card } from '@/components/shared/Card';
 import { Button } from '@/components/shared/Button';
 import { Avatar } from '@/components/shared/Avatar';
+import { messagesService } from '@/lib/firestore';
 import styles from './Messaging.module.css';
 
-// Mock data for conversations
+// Mock data for conversations as fallback
 const MOCK_CONVERSATIONS = [
   {
     id: '1',
@@ -57,38 +57,6 @@ const MOCK_CONVERSATIONS = [
       timestamp: 'Yesterday',
       isRead: true,
       sender: 'user3'
-    },
-    unread: 0
-  },
-  {
-    id: '4',
-    user: {
-      id: 'user4',
-      name: 'Emily Williams',
-      avatar: null,
-      title: 'Data Scientist at Gauntlet AI'
-    },
-    lastMessage: {
-      text: 'Did you see the results of our latest experiment?',
-      timestamp: 'Monday',
-      isRead: true,
-      sender: 'user4'
-    },
-    unread: 0
-  },
-  {
-    id: '5',
-    user: {
-      id: 'user5',
-      name: 'James Wilson',
-      avatar: null,
-      title: 'VP of Engineering at Gauntlet AI'
-    },
-    lastMessage: {
-      text: 'Let\'s discuss this at the team meeting.',
-      timestamp: 'Monday',
-      isRead: true,
-      sender: 'user5'
     },
     unread: 0
   }
@@ -138,91 +106,6 @@ const MOCK_MESSAGES: Record<string, Array<{
       sender: 'user1',
       isSelf: false
     }
-  ],
-  '2': [
-    {
-      id: 'm1',
-      text: 'Hey, do you have a minute?',
-      timestamp: 'Yesterday, 2:30 PM',
-      sender: 'user2',
-      isSelf: false
-    },
-    {
-      id: 'm2',
-      text: 'Sure, what\'s up?',
-      timestamp: 'Yesterday, 2:32 PM',
-      sender: 'self',
-      isSelf: true
-    },
-    {
-      id: 'm3',
-      text: 'I\'m working on the new API and had a question about the requirements.',
-      timestamp: 'Yesterday, 2:33 PM',
-      sender: 'user2',
-      isSelf: false
-    },
-    {
-      id: 'm4',
-      text: 'Can you share the specs for that new feature?',
-      timestamp: 'Yesterday, 2:34 PM',
-      sender: 'user2',
-      isSelf: false
-    }
-  ],
-  '3': [
-    {
-      id: 'm1',
-      text: 'I\'ve been working on the UI for our new dashboard.',
-      timestamp: 'Yesterday, 11:20 AM',
-      sender: 'user3',
-      isSelf: false
-    },
-    {
-      id: 'm2',
-      text: 'That sounds great! Can I see what you\'ve done so far?',
-      timestamp: 'Yesterday, 11:25 AM',
-      sender: 'self',
-      isSelf: true
-    },
-    {
-      id: 'm3',
-      text: 'I just sent you the design files!',
-      timestamp: 'Yesterday, 11:45 AM',
-      sender: 'user3',
-      isSelf: false
-    }
-  ],
-  '4': [
-    {
-      id: 'm1',
-      text: 'Did you see the results of our latest experiment?',
-      timestamp: 'Monday, 3:15 PM',
-      sender: 'user4',
-      isSelf: false
-    }
-  ],
-  '5': [
-    {
-      id: 'm1',
-      text: 'We need to discuss the roadmap for Q3.',
-      timestamp: 'Monday, 9:30 AM',
-      sender: 'user5',
-      isSelf: false
-    },
-    {
-      id: 'm2',
-      text: 'Sounds good. When would be a good time?',
-      timestamp: 'Monday, 9:45 AM',
-      sender: 'self',
-      isSelf: true
-    },
-    {
-      id: 'm3',
-      text: 'Let\'s discuss this at the team meeting.',
-      timestamp: 'Monday, 10:00 AM',
-      sender: 'user5',
-      isSelf: false
-    }
   ]
 };
 
@@ -265,7 +148,7 @@ const Conversation = ({
 };
 
 // Message component
-const Message = ({ message }: { message: typeof MOCK_MESSAGES['1'][0] }) => {
+const Message = ({ message }: { message: any }) => {
   return (
     <div className={`${styles.message} ${message.isSelf ? styles.messageSelf : ''}`}>
       <div className={styles.messageContent}>
@@ -277,58 +160,110 @@ const Message = ({ message }: { message: typeof MOCK_MESSAGES['1'][0] }) => {
 };
 
 export default function Messaging() {
-  // const { user } = useAuthContext();
+  const { user } = useAuthContext();
   const [conversations, setConversations] = useState(MOCK_CONVERSATIONS);
   const [activeConversation, setActiveConversation] = useState<string | null>('1');
-  const [messages, setMessages] = useState<typeof MOCK_MESSAGES['1']>([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load messages when active conversation changes
+  // Fetch conversations from Firestore
   useEffect(() => {
-    if (activeConversation) {
-      setMessages(MOCK_MESSAGES[activeConversation as keyof typeof MOCK_MESSAGES] || []);
+    async function fetchConversations() {
+      if (!user?.uid) return;
+      
+      setIsLoading(true);
+      try {
+        // Fetch conversations from Firestore
+        const fetchedConversations = await messagesService.getConversations(user.uid);
+        if (fetchedConversations.length > 0) {
+          setConversations(fetchedConversations);
+          // Set the first conversation as active if none is selected
+          if (!activeConversation) {
+            setActiveConversation(fetchedConversations[0].id);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching conversations:', err);
+        setError('Failed to load conversations. Please try again later.');
+        // Fall back to mock data
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }, [activeConversation]);
+    
+    fetchConversations();
+  }, [user, activeConversation]);
+
+  // Fetch messages for active conversation
+  useEffect(() => {
+    async function fetchMessages() {
+      if (!user?.uid || !activeConversation) return;
+      
+      try {
+        // Fetch messages from Firestore
+        const fetchedMessages = await messagesService.getMessages(activeConversation, user.uid);
+        setMessages(fetchedMessages || []);
+      } catch (err) {
+        console.error('Error fetching messages:', err);
+        setError('Failed to load messages. Please try again later.');
+        // Fall back to mock data if available
+        setMessages(MOCK_MESSAGES[activeConversation] || []);
+      }
+    }
+    
+    fetchMessages();
+  }, [user, activeConversation]);
 
   // Scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !activeConversation) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !activeConversation || !user?.uid) return;
 
-    const newMsg = {
-      id: `m${Date.now()}`,
-      text: newMessage,
-      timestamp: 'Just now',
-      sender: 'self',
-      isSelf: true
-    };
-
-    // Update messages
-    setMessages(prev => [...prev, newMsg]);
-
-    // Update conversation list
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === activeConversation
-          ? {
-              ...conv,
-              lastMessage: {
-                text: newMessage,
-                timestamp: 'Just now',
-                isRead: true,
-                sender: 'self'
+    try {
+      // Find the receiver ID from the active conversation
+      const activeConvo = conversations.find(c => c.id === activeConversation);
+      if (!activeConvo) return;
+      
+      // Send message to Firestore
+      const sentMessage = await messagesService.sendMessage(
+        activeConversation,
+        user.uid,
+        activeConvo.user.id,
+        newMessage
+      );
+      
+      // Update UI
+      setMessages(prev => [...prev, sentMessage]);
+      
+      // Update conversation in the list
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === activeConversation
+            ? {
+                ...conv,
+                lastMessage: {
+                  text: newMessage,
+                  timestamp: 'Just now',
+                  isRead: true,
+                  sender: 'self'
+                }
               }
-            }
-          : conv
-      )
-    );
-
-    // Clear input
-    setNewMessage('');
+            : conv
+        )
+      );
+      
+      // Clear input
+      setNewMessage('');
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Failed to send message. Please try again.');
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -336,6 +271,11 @@ export default function Messaging() {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const createNewConversation = () => {
+    // This would typically open a user selection modal
+    alert('This feature would allow you to select a user to message');
   };
 
   return (
@@ -349,7 +289,7 @@ export default function Messaging() {
               <div className={styles.conversationsColumn}>
                 <div className={styles.conversationsHeader}>
                   <h2 className={styles.conversationsTitle}>Messages</h2>
-                  <button className={styles.newMessageButton}>
+                  <button className={styles.newMessageButton} onClick={createNewConversation}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.newMessageIcon}>
                       <line x1="12" y1="5" x2="12" y2="19"></line>
                       <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -367,16 +307,35 @@ export default function Messaging() {
                     className={styles.searchInput}
                   />
                 </div>
-                <div className={styles.conversationsList}>
-                  {conversations.map(conversation => (
-                    <Conversation
-                      key={conversation.id}
-                      conversation={conversation}
-                      isActive={activeConversation === conversation.id}
-                      onClick={() => setActiveConversation(conversation.id)}
-                    />
-                  ))}
-                </div>
+                
+                {isLoading ? (
+                  <div className={styles.loadingContainer}>
+                    <div className={styles.loadingSpinner}></div>
+                    <p className={styles.loadingText}>Loading conversations...</p>
+                  </div>
+                ) : (
+                  <div className={styles.conversationsList}>
+                    {conversations.length > 0 ? (
+                      conversations.map(conversation => (
+                        <Conversation
+                          key={conversation.id}
+                          conversation={conversation}
+                          isActive={activeConversation === conversation.id}
+                          onClick={() => setActiveConversation(conversation.id)}
+                        />
+                      ))
+                    ) : (
+                      <div className={styles.emptyState}>
+                        <p>No conversations yet</p>
+                        <Button
+                          label="Start a conversation"
+                          variant="primary"
+                          onClick={createNewConversation}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               
               <div className={styles.chatColumn}>
@@ -410,9 +369,27 @@ export default function Messaging() {
                     </div>
                     
                     <div className={styles.chatMessages}>
-                      {messages.map(message => (
-                        <Message key={message.id} message={message} />
-                      ))}
+                      {error && (
+                        <div className={styles.errorMessage}>
+                          <p>{error}</p>
+                          <Button 
+                            label="Retry" 
+                            variant="primary"
+                            onClick={() => window.location.reload()}
+                          />
+                        </div>
+                      )}
+                      
+                      {messages.length > 0 ? (
+                        messages.map(message => (
+                          <Message key={message.id} message={message} />
+                        ))
+                      ) : (
+                        <div className={styles.emptyMessages}>
+                          <p>No messages yet</p>
+                          <p>Start the conversation with a message</p>
+                        </div>
+                      )}
                       <div ref={messagesEndRef} />
                     </div>
                     
@@ -466,6 +443,7 @@ export default function Messaging() {
                       <Button 
                         label="New Message" 
                         variant="primary"
+                        onClick={createNewConversation}
                       />
                     </div>
                   </div>

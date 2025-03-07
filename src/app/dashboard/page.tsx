@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Navigation } from '@/components/shared/Navigation';
 import { Card } from '@/components/shared/Card';
 import { Button } from '@/components/shared/Button';
 import { Avatar } from '@/components/shared/Avatar';
+import { postsService } from '@/lib/firestore';
 import styles from './Dashboard.module.css';
 
-// Sample mock posts data
+// Using the mock data as fallback
 const MOCK_POSTS = [
   {
     id: '1',
@@ -55,6 +56,50 @@ export default function Dashboard() {
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [likedPosts, setLikedPosts] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch posts from Firestore
+  useEffect(() => {
+    async function fetchPosts() {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        // Fetch posts from Firestore
+        const fetchedPosts = await postsService.getPosts();
+        if (fetchedPosts.length > 0) {
+          const formattedPosts = fetchedPosts.map(post => ({
+            id: post.id || 'unknown',
+            user: {
+              name: post.userName,
+              title: post.userTitle,
+              avatar: post.userAvatar
+            },
+            content: post.content,
+            timestamp: post.timestampString || 'Just now',
+            likes: post.likes,
+            comments: post.comments
+          }));
+          setPosts(formattedPosts);
+        }
+        
+        // Fetch liked posts
+        if (user.uid) {
+          const likedPostIds = await postsService.getLikedPosts(user.uid);
+          setLikedPosts(likedPostIds);
+        }
+      } catch (err) {
+        console.error('Error fetching posts:', err);
+        setError('Failed to load posts. Please try again later.');
+        // Fall back to mock data
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchPosts();
+  }, [user]);
 
   // Handle create post modal
   const handleOpenPostModal = () => {
@@ -67,41 +112,70 @@ export default function Dashboard() {
   };
 
   // Handle creating a new post
-  const handleCreatePost = () => {
-    if (!newPostContent.trim()) return;
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim() || !user) return;
 
-    const newPost = {
-      id: `post-${Date.now()}`,
-      user: {
-        name: user?.displayName || user?.email?.split('@')[0] || 'User',
-        title: 'Software Engineer at Gauntlet AI',
-        avatar: (user?.photoURL || null) as string | null
-      },
-      content: newPostContent,
-      timestamp: 'Just now',
-      likes: 0,
-      comments: 0
-    };
-
-    setPosts([newPost, ...posts]);
-    setNewPostContent('');
-    setIsCreatingPost(false);
+    try {
+      const postData = {
+        userId: user.uid,
+        userName: user.displayName || user.email?.split('@')[0] || 'User',
+        userTitle: 'Software Engineer at Gauntlet AI',
+        userAvatar: user.photoURL || null,
+        content: newPostContent,
+      };
+      
+      // Create post in Firestore
+      const newPost = await postsService.createPost(postData);
+      
+      // Format post for UI
+      const formattedPost = {
+        id: newPost.id || 'unknown',
+        user: {
+          name: newPost.userName,
+          title: newPost.userTitle,
+          avatar: newPost.userAvatar
+        },
+        content: newPost.content,
+        timestamp: 'Just now',
+        likes: 0,
+        comments: 0
+      };
+      
+      setPosts([formattedPost, ...posts]);
+      setNewPostContent('');
+      setIsCreatingPost(false);
+    } catch (err) {
+      console.error('Error creating post:', err);
+      setError('Failed to create post. Please try again.');
+    }
   };
 
   // Handle liking a post
-  const handleLikePost = (postId: string) => {
-    if (likedPosts.includes(postId)) {
-      // Unlike the post
-      setLikedPosts(likedPosts.filter(id => id !== postId));
-      setPosts(posts.map(post => 
-        post.id === postId ? { ...post, likes: post.likes - 1 } : post
-      ));
-    } else {
-      // Like the post
-      setLikedPosts([...likedPosts, postId]);
-      setPosts(posts.map(post => 
-        post.id === postId ? { ...post, likes: post.likes + 1 } : post
-      ));
+  const handleLikePost = async (postId: string) => {
+    if (!user?.uid) return;
+    
+    try {
+      // Update like status in Firestore
+      const isLiked = await postsService.toggleLikePost(postId, user.uid);
+      
+      if (isLiked) {
+        // Add to liked posts
+        setLikedPosts([...likedPosts, postId]);
+        // Update UI
+        setPosts(posts.map(post => 
+          post.id === postId ? { ...post, likes: post.likes + 1 } : post
+        ));
+      } else {
+        // Remove from liked posts
+        setLikedPosts(likedPosts.filter(id => id !== postId));
+        // Update UI
+        setPosts(posts.map(post => 
+          post.id === postId ? { ...post, likes: post.likes - 1 } : post
+        ));
+      }
+    } catch (err) {
+      console.error('Error liking post:', err);
+      setError('Failed to like post. Please try again.');
     }
   };
   
@@ -270,6 +344,26 @@ export default function Dashboard() {
                     </div>
                   </Card>
                 </div>
+              )}
+              
+              {/* Loading state */}
+              {isLoading && (
+                <Card className={styles.loadingCard}>
+                  <div className={styles.loadingSpinner}></div>
+                  <p className={styles.loadingText}>Loading posts...</p>
+                </Card>
+              )}
+              
+              {/* Error state */}
+              {error && (
+                <Card className={styles.errorCard}>
+                  <p className={styles.errorText}>{error}</p>
+                  <Button 
+                    label="Retry" 
+                    variant="primary"
+                    onClick={() => window.location.reload()}
+                  />
+                </Card>
               )}
               
               <div className={styles.feedDivider}>
