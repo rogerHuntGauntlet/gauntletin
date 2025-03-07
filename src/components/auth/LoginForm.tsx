@@ -26,7 +26,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       if (onSuccess) {
         onSuccess();
       }
-    } catch (err) {
+    } catch {
       // Error is handled by the auth hook
     }
   };

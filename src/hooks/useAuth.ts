@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { auth } from '../lib/firebase';
 
 export interface AuthError {
@@ -54,10 +55,11 @@ export function useAuth(): UseAuthReturn {
     try {
       setLoading(true);
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (err: any) {
+    } catch (err: FirebaseError | unknown) {
+      const firebaseErr = err as FirebaseError;
       setError({
-        code: err.code || 'auth/unknown',
-        message: err.message || 'An unknown error occurred'
+        code: firebaseErr.code || 'auth/unknown',
+        message: firebaseErr.message || 'An unknown error occurred'
       });
     } finally {
       setLoading(false);
@@ -78,10 +80,11 @@ export function useAuth(): UseAuthReturn {
     try {
       setLoading(true);
       await createUserWithEmailAndPassword(auth, email, password);
-    } catch (err: any) {
+    } catch (err: FirebaseError | unknown) {
+      const firebaseErr = err as FirebaseError;
       setError({
-        code: err.code || 'auth/unknown',
-        message: err.message || 'An unknown error occurred'
+        code: firebaseErr.code || 'auth/unknown',
+        message: firebaseErr.message || 'An unknown error occurred'
       });
     } finally {
       setLoading(false);
@@ -93,10 +96,11 @@ export function useAuth(): UseAuthReturn {
     try {
       setLoading(true);
       await firebaseSignOut(auth);
-    } catch (err: any) {
+    } catch (err: FirebaseError | unknown) {
+      const firebaseErr = err as FirebaseError;
       setError({
-        code: err.code || 'auth/unknown',
-        message: err.message || 'An unknown error occurred'
+        code: firebaseErr.code || 'auth/unknown',
+        message: firebaseErr.message || 'An unknown error occurred'
       });
     } finally {
       setLoading(false);
