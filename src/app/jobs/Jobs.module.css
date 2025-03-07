@@ -73,8 +73,19 @@
   margin: 1.25rem 0;
 }
 
-.filtersSection {
+.filterSection {
   margin-bottom: 1.25rem;
+}
+
+.filterSectionTitle {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  color: #111827;
+}
+
+.filterGroup {
+  margin-bottom: 1rem;
 }
 
 .filtersLabel {
@@ -109,13 +120,13 @@
   flex: 1;
 }
 
-.tabs {
+.tabsContainer {
   display: flex;
   border-bottom: 1px solid #e5e7eb;
   margin-bottom: 1.5rem;
 }
 
-.tabButton {
+.tab {
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -127,15 +138,15 @@
   transition: color 0.2s;
 }
 
-.tabButton:hover {
+.tab:hover {
   color: #111827;
 }
 
-.tabButtonActive {
+.activeTab {
   color: #3b82f6;
 }
 
-.tabButtonActive::after {
+.activeTab::after {
   content: '';
   position: absolute;
   bottom: -1px;
@@ -145,10 +156,28 @@
   background-color: #3b82f6;
 }
 
-.jobsList {
+.jobsContainer {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
+}
+
+.jobsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.jobsTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.jobsCount {
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 
 .jobCard {
@@ -242,10 +271,13 @@
   opacity: 0.7;
 }
 
-.noResults {
+.noJobsFound {
   padding: 2rem;
   text-align: center;
   color: #6b7280;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
 }
 
 @media (max-width: 768px) {

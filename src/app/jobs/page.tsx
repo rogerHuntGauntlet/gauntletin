@@ -222,7 +222,7 @@ export default function Jobs() {
   });
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute bypassAuth={true}>
       <div className={styles.jobs}>
         <Navigation />
         
@@ -252,13 +252,13 @@ export default function Jobs() {
                   <h3 className={styles.filterSectionTitle}>Filters</h3>
                   
                   <div className={styles.filterGroup}>
-                    <label htmlFor="location" className={styles.filterLabel}>Location</label>
+                    <label htmlFor="location" className={styles.filtersLabel}>Location</label>
                     <select
                       id="location"
                       name="location"
                       value={filters.location}
                       onChange={handleFilterChange}
-                      className={styles.filterSelect}
+                      className={styles.filtersSelect}
                     >
                       <option value="">All Locations</option>
                       <option value="San Francisco">San Francisco</option>
@@ -269,13 +269,13 @@ export default function Jobs() {
                   </div>
                   
                   <div className={styles.filterGroup}>
-                    <label htmlFor="jobType" className={styles.filterLabel}>Job Type</label>
+                    <label htmlFor="jobType" className={styles.filtersLabel}>Job Type</label>
                     <select
                       id="jobType"
                       name="jobType"
                       value={filters.jobType}
                       onChange={handleFilterChange}
-                      className={styles.filterSelect}
+                      className={styles.filtersSelect}
                     >
                       <option value="">All Types</option>
                       <option value="Full-time">Full-time</option>
@@ -286,13 +286,13 @@ export default function Jobs() {
                   </div>
                   
                   <div className={styles.filterGroup}>
-                    <label htmlFor="datePosted" className={styles.filterLabel}>Date Posted</label>
+                    <label htmlFor="datePosted" className={styles.filtersLabel}>Date Posted</label>
                     <select
                       id="datePosted"
                       name="datePosted"
                       value={filters.datePosted}
                       onChange={handleFilterChange}
-                      className={styles.filterSelect}
+                      className={styles.filtersSelect}
                     >
                       <option value="">Any Time</option>
                       <option value="today">Today</option>
